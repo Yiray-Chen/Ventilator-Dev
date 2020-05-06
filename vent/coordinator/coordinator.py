@@ -5,7 +5,7 @@ from typing import List, Dict
 import vent
 import vent.controller.control_module
 from vent.common.message import ControlSetting, Alarm
-from vent.common.message import SensorValueNew
+from vent.common.message import SensorValue
 from vent.common.values import ValueName
 from vent.coordinator.process_manager import ProcessManager
 from vent.coordinator.rpc import get_rpc_client
@@ -24,8 +24,7 @@ class CoordinatorBase:
     #         last_message_timestamp = self.last_message_timestamp
     #     return last_message_timestamp
 
-
-    def get_sensors(self) -> Dict[ValueName, SensorValueNew]:
+    def get_sensors(self) -> Dict[ValueName, SensorValue]:
         pass
 
     def get_active_alarms(self) -> Dict[str, Alarm]:
@@ -66,28 +65,28 @@ class CoordinatorLocal(CoordinatorBase):
         super().__init__(sim_mode=sim_mode)
         self.control_module = vent.controller.control_module.get_control_module(sim_mode)
 
-    def get_sensors(self) -> Dict[ValueName, SensorValueNew]:
+    def get_sensors(self) -> Dict[ValueName, SensorValue]:
         sensor_values = self.control_module.get_sensors()
         res = {
-            ValueName.PIP: SensorValueNew(ValueName.PIP, sensor_values.pip, sensor_values.timestamp,
-                                          sensor_values.loop_counter),
-            ValueName.PEEP: SensorValueNew(ValueName.PEEP, sensor_values.peep, sensor_values.timestamp,
-                                           sensor_values.loop_counter),
-            ValueName.FIO2: SensorValueNew(ValueName.FIO2, sensor_values.fio2, sensor_values.timestamp,
-                                           sensor_values.loop_counter),
-            ValueName.TEMP: SensorValueNew(ValueName.TEMP, sensor_values.temp, sensor_values.timestamp,
-                                           sensor_values.loop_counter),
-            ValueName.HUMIDITY: SensorValueNew(ValueName.HUMIDITY, sensor_values.humidity, sensor_values.timestamp,
-                                               sensor_values.loop_counter),
-            ValueName.PRESSURE: SensorValueNew(ValueName.PRESSURE, sensor_values.pressure, sensor_values.timestamp,
-                                               sensor_values.loop_counter),
-            ValueName.VTE: SensorValueNew(ValueName.VTE, sensor_values.vte, sensor_values.timestamp,
-                                          sensor_values.loop_counter),
-            ValueName.BREATHS_PER_MINUTE: SensorValueNew(ValueName.BREATHS_PER_MINUTE, sensor_values.breaths_per_minute,
-                                                         sensor_values.timestamp, sensor_values.loop_counter),
-            ValueName.INSPIRATION_TIME_SEC: SensorValueNew(ValueName.INSPIRATION_TIME_SEC,
-                                                           sensor_values.inspiration_time_sec, sensor_values.timestamp,
-                                                           sensor_values.loop_counter),
+            ValueName.PIP: SensorValue(ValueName.PIP, sensor_values.pip, sensor_values.timestamp,
+                                       sensor_values.loop_counter),
+            ValueName.PEEP: SensorValue(ValueName.PEEP, sensor_values.peep, sensor_values.timestamp,
+                                        sensor_values.loop_counter),
+            ValueName.FIO2: SensorValue(ValueName.FIO2, sensor_values.fio2, sensor_values.timestamp,
+                                        sensor_values.loop_counter),
+            ValueName.TEMP: SensorValue(ValueName.TEMP, sensor_values.temp, sensor_values.timestamp,
+                                        sensor_values.loop_counter),
+            ValueName.HUMIDITY: SensorValue(ValueName.HUMIDITY, sensor_values.humidity, sensor_values.timestamp,
+                                            sensor_values.loop_counter),
+            ValueName.PRESSURE: SensorValue(ValueName.PRESSURE, sensor_values.pressure, sensor_values.timestamp,
+                                            sensor_values.loop_counter),
+            ValueName.VTE: SensorValue(ValueName.VTE, sensor_values.vte, sensor_values.timestamp,
+                                       sensor_values.loop_counter),
+            ValueName.BREATHS_PER_MINUTE: SensorValue(ValueName.BREATHS_PER_MINUTE, sensor_values.breaths_per_minute,
+                                                      sensor_values.timestamp, sensor_values.loop_counter),
+            ValueName.INSPIRATION_TIME_SEC: SensorValue(ValueName.INSPIRATION_TIME_SEC,
+                                                        sensor_values.inspiration_time_sec, sensor_values.timestamp,
+                                                        sensor_values.loop_counter),
         }
         return res
 
@@ -136,28 +135,28 @@ class CoordinatorRemote(CoordinatorBase):
         self.proxy = get_rpc_client()
         # TODO: make sure the ipc connection is setup. There should be a clever method
 
-    def get_sensors(self) -> Dict[ValueName, SensorValueNew]:
+    def get_sensors(self) -> Dict[ValueName, SensorValue]:
         sensor_values = pickle.loads(self.proxy.get_sensors().data)
         res = {
-            ValueName.PIP: SensorValueNew(ValueName.PIP, sensor_values.pip, sensor_values.timestamp,
-                                          sensor_values.loop_counter),
-            ValueName.PEEP: SensorValueNew(ValueName.PEEP, sensor_values.peep, sensor_values.timestamp,
-                                           sensor_values.loop_counter),
-            ValueName.FIO2: SensorValueNew(ValueName.FIO2, sensor_values.fio2, sensor_values.timestamp,
-                                           sensor_values.loop_counter),
-            ValueName.TEMP: SensorValueNew(ValueName.TEMP, sensor_values.temp, sensor_values.timestamp,
-                                           sensor_values.loop_counter),
-            ValueName.HUMIDITY: SensorValueNew(ValueName.HUMIDITY, sensor_values.humidity, sensor_values.timestamp,
-                                               sensor_values.loop_counter),
-            ValueName.PRESSURE: SensorValueNew(ValueName.PRESSURE, sensor_values.pressure, sensor_values.timestamp,
-                                               sensor_values.loop_counter),
-            ValueName.VTE: SensorValueNew(ValueName.VTE, sensor_values.vte, sensor_values.timestamp,
-                                          sensor_values.loop_counter),
-            ValueName.BREATHS_PER_MINUTE: SensorValueNew(ValueName.BREATHS_PER_MINUTE, sensor_values.breaths_per_minute,
-                                                         sensor_values.timestamp, sensor_values.loop_counter),
-            ValueName.INSPIRATION_TIME_SEC: SensorValueNew(ValueName.INSPIRATION_TIME_SEC,
-                                                           sensor_values.inspiration_time_sec, sensor_values.timestamp,
-                                                           sensor_values.loop_counter),
+            ValueName.PIP: SensorValue(ValueName.PIP, sensor_values.pip, sensor_values.timestamp,
+                                       sensor_values.loop_counter),
+            ValueName.PEEP: SensorValue(ValueName.PEEP, sensor_values.peep, sensor_values.timestamp,
+                                        sensor_values.loop_counter),
+            ValueName.FIO2: SensorValue(ValueName.FIO2, sensor_values.fio2, sensor_values.timestamp,
+                                        sensor_values.loop_counter),
+            ValueName.TEMP: SensorValue(ValueName.TEMP, sensor_values.temp, sensor_values.timestamp,
+                                        sensor_values.loop_counter),
+            ValueName.HUMIDITY: SensorValue(ValueName.HUMIDITY, sensor_values.humidity, sensor_values.timestamp,
+                                            sensor_values.loop_counter),
+            ValueName.PRESSURE: SensorValue(ValueName.PRESSURE, sensor_values.pressure, sensor_values.timestamp,
+                                            sensor_values.loop_counter),
+            ValueName.VTE: SensorValue(ValueName.VTE, sensor_values.vte, sensor_values.timestamp,
+                                       sensor_values.loop_counter),
+            ValueName.BREATHS_PER_MINUTE: SensorValue(ValueName.BREATHS_PER_MINUTE, sensor_values.breaths_per_minute,
+                                                      sensor_values.timestamp, sensor_values.loop_counter),
+            ValueName.INSPIRATION_TIME_SEC: SensorValue(ValueName.INSPIRATION_TIME_SEC,
+                                                        sensor_values.inspiration_time_sec, sensor_values.timestamp,
+                                                        sensor_values.loop_counter),
         }
         return res
 

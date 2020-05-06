@@ -1,8 +1,7 @@
 from enum import Enum, auto
 
 
-
-class SensorValueNew:
+class SensorValue:
     def __init__(self, name, value, timestamp, loop_counter):
         self.name = name
         self.value = value

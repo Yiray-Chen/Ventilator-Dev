@@ -1,11 +1,12 @@
-import time
-from typing import List
-import threading
-import numpy as np
 import copy
+import threading
+import time
 from collections import deque
+from typing import List, Dict
 
-from vent.common.message import SensorValues, ControlSetting, Alarm, AlarmSeverity
+import numpy as np
+
+from vent.common.message import SensorValue, ControlSetting, Alarm, AlarmSeverity
 from vent.common.values import CONTROL, ValueName
 
 
@@ -107,24 +108,34 @@ class ControlModuleBase:
         self.__PEEP_max         = CONTROL[ValueName.PEEP].safe_range[1]
         self.__PEEP_lastset     = time.time()
         self.__bpm_min          = CONTROL[ValueName.BREATHS_PER_MINUTE].safe_range[0]
-        self.__bpm_max          = CONTROL[ValueName.BREATHS_PER_MINUTE].safe_range[1]
-        self.__bpm_lastset      = time.time()
-        self.__I_phase_min      = CONTROL[ValueName.INSPIRATION_TIME_SEC].safe_range[0]
-        self.__I_phase_max      = CONTROL[ValueName.INSPIRATION_TIME_SEC].safe_range[1]
-        self.__I_phase_lastset  = time.time()
+        self.__bpm_max = CONTROL[ValueName.BREATHS_PER_MINUTE].safe_range[1]
+        self.__bpm_lastset = time.time()
+        self.__I_phase_min = CONTROL[ValueName.INSPIRATION_TIME_SEC].safe_range[0]
+        self.__I_phase_max = CONTROL[ValueName.INSPIRATION_TIME_SEC].safe_range[1]
+        self.__I_phase_lastset = time.time()
 
         ############### Initialize COPY variables for threads  ##############
         # COPY variables that later updated on a regular basis
         self.COPY_active_alarms = {}
         self.COPY_logged_alarms = list(self.__logged_alarms)
-        self.COPY_sensor_values = SensorValues()
+        self.COPY_sensor_values = {
+            ValueName.PIP: SensorValue(ValueName.PIP, 0, 0, 0),
+            ValueName.PEEP: SensorValue(ValueName.PEEP, 0, 0, 0),
+            ValueName.FIO2: SensorValue(ValueName.FIO2, 0, 0, 0),
+            ValueName.TEMP: SensorValue(ValueName.TEMP, 0, 0, 0),
+            ValueName.HUMIDITY: SensorValue(ValueName.HUMIDITY, 0, 0, 0),
+            ValueName.PRESSURE: SensorValue(ValueName.PRESSURE, 0, 0, 0),
+            ValueName.VTE: SensorValue(ValueName.VTE, 0, 0, 0),
+            ValueName.BREATHS_PER_MINUTE: SensorValue(ValueName.BREATHS_PER_MINUTE, 0, 0, 0),
+            ValueName.INSPIRATION_TIME_SEC: SensorValue(ValueName.INSPIRATION_TIME_SEC, 0, 0, 0),
+        }
 
         ###########################  Threading init  #########################
         # Run the start() method as a thread
         self._loop_counter = 0
         self._running = False
         self._lock = threading.Lock()
-        self._alarm_to_COPY()  #These require the lock
+        self._alarm_to_COPY()  # These require the lock
         self._initialize_set_to_COPY()
 
         self.__thread = threading.Thread(target=self._start_mainloop, daemon=True)
@@ -267,10 +278,10 @@ class ControlModuleBase:
             self.__test_critical_levels(min=self.__bpm_min, max=self.__bpm_max, value=self._DATA_BPM, name="BREATHS_PER_MINUTE")
             self.__test_critical_levels(min=self.__I_phase_min, max=self.__I_phase_max, value=self._DATA_I_PHASE, name="I_PHASE")
 
-    def get_sensors(self) -> SensorValues:
+    def get_sensors(self) -> Dict[ValueName, SensorValue]:
         # Make sure to return a copy of the instance
         self._lock.acquire()
-        cp = copy.deepcopy( self.COPY_sensor_values )
+        cp = copy.deepcopy(self.COPY_sensor_values)
         self._lock.release()
         return cp
 
@@ -681,17 +692,29 @@ class ControlModuleSimulator(ControlModuleBase):
     def _sensor_to_COPY(self):
         # And the sensor measurements
         self._lock.acquire()
-        self.COPY_sensor_values = SensorValues(pip=self._DATA_PIP,
-                                          peep=self._DATA_PEEP,
-                                          fio2=self.Balloon.fio2,
-                                          temp=self.Balloon.temperature,
-                                          humidity= self.Balloon.humidity,
-                                          pressure=self.Balloon.current_pressure,
-                                          vte=self._DATA_VTE,
-                                          breaths_per_minute=self._DATA_BPM,
-                                          inspiration_time_sec=self._DATA_I_PHASE,
-                                          timestamp=time.time(),
-                                          loop_counter = self._loop_counter)
+        t = time.time(),
+        self.COPY_sensor_values = {
+            ValueName.PIP: SensorValue(ValueName.PIP, self._DATA_PIP, t,
+                                       self._loop_counter),
+            ValueName.PEEP: SensorValue(ValueName.PEEP, self._DATA_PEEP, t,
+                                        self._loop_counter),
+            ValueName.FIO2: SensorValue(ValueName.FIO2, self.Balloon.fio2, t,
+                                        self._loop_counter),
+            ValueName.TEMP: SensorValue(ValueName.TEMP, self.Balloon.temperature, t,
+                                        self._loop_counter),
+            ValueName.HUMIDITY: SensorValue(ValueName.HUMIDITY, self.Balloon.humidity, t,
+                                            self._loop_counter),
+            ValueName.PRESSURE: SensorValue(ValueName.PRESSURE, self.Balloon.current_pressure, t,
+                                            self._loop_counter),
+            ValueName.VTE: SensorValue(ValueName.VTE, self._DATA_VTE, t,
+                                       self._loop_counter),
+            ValueName.BREATHS_PER_MINUTE: SensorValue(ValueName.BREATHS_PER_MINUTE, self._DATA_BPM,
+                                                      t,
+                                                      self._loop_counter),
+            ValueName.INSPIRATION_TIME_SEC: SensorValue(ValueName.INSPIRATION_TIME_SEC,
+                                                        self._DATA_I_PHASE, t,
+                                                        self._loop_counter),
+        }
         self._lock.release()
 
     def _start_mainloop(self):
