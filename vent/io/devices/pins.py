@@ -72,8 +72,8 @@ class PWMOutput(Pin):
     """
     I am a Special Pin!
     """
-    _DEFAULT_FREQUENCY = 20000
-    _DEFAULT_SOFT_FREQ = 2000
+    _DEFAULT_FREQUENCY = 1500
+    _DEFAULT_SOFT_FREQ = 1000
     _HARDWARE_PWM_PINS = (12, 13, 18, 19)
 
     def __init__(self, pin, initial_duty=0, frequency=None, pig=None):

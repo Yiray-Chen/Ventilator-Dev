@@ -34,9 +34,11 @@ class Sensor(ABC):
         False if something went wrong.
         """
         value = self._read()
-        if self._verify(value):
-            self.__store_last(value)
-            self._last_timestamp = time.time()
+        if not self._verify(value):
+            #raise RuntimeWarning('Sensor reading out of normal bounds')
+            print('Sensor reading out of normal bounds')
+        self.__store_last(value)
+        self._last_timestamp = time.time()
         return self._verify(value)
 
     def get(self):

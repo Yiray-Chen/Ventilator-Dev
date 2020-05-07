@@ -117,25 +117,26 @@ class PWMControlValve(SolenoidBase, PWMOutput):
         (valves opening) or'rising = False' (valves closing), 
         as different characteristic flow behavior can be observed."""
         
-        if(rising==True):        
-            idx = (np.abs(self._response_array[:,1] - (setpoint / 100))).argmin()
+        idx = (np.abs(self._response_array[:,0] - (setpoint))).argmin()
+        if(rising==True):
+            duty = self._response_array[idx,1]
         else:
-            idx = (np.abs(self._response_array[:,2] - (setpoint / 100))).argmin()
+            duty = self._response_array[idx,2]
         
-        return self._response_array[idx,0]
+        return duty
 
     def inverse_response(self, duty_cycle, rising=True):
         """Inverse of response. Given a duty cycle in the range (0,1),
         returns the corresponding linear setpoint in the range (0,100).
         """
-        idx = (np.abs(self._response_array[:,0] - duty_cycle)).argmin()
         
         if(rising==True):
-            response_val = self._response_array[idx,1]
+            idx = (np.abs(self._response_array[:,1] - duty_cycle)).argmin()
         else:
-            response_val = self._response_array[idx,2]
+            idx = (np.abs(self._response_array[:,2] - duty_cycle)).argmin()
+        setpt = self._response_array[idx,0]
         
-        return response_val * 100
+        return setpt
 
 
 class SimOnOffValve(SolenoidBase):

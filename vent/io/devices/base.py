@@ -323,7 +323,7 @@ class ADS1115(I2CDevice):
         int(address,0) converts to int from 0xFF format
         """
 
-        super().__init__(int(address,0), int(i2c_bus), pig)
+        super().__init__(address, i2c_bus, pig)
         self.pointer = self.Register(self._POINTER_FIELDS, self._POINTER_VALUES)
         self._config = self.Register(self._CONFIG_FIELDS, self._CONFIG_VALUES)
         self._last_cfg = self._read_last_cfg()

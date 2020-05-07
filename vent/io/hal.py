@@ -1,12 +1,14 @@
 """ Module for interacting with physical and/or simulated devices installed on the ventilator.
 
 """
-import configparser
+
 from importlib import import_module
+from ast import literal_eval
+from .devices.sensors import Sensor
 
 import pigpio
+import configparser
 
-from .devices.sensors import Sensor
 
 
 class Hal:
@@ -68,10 +70,20 @@ class Hal:
             sdict = dict(self.config[section])
             class_ = getattr(import_module('.'+sdict['module'], 'vent.io'), sdict['type'])
             opts = {key: sdict[key] for key in sdict.keys() - ('module', 'type',)}
-            if 'adc' in opts.keys():
-                opts['adc'] = self._adc
+            for key in opts.keys():
+                if key == 'adc':
+                    opts[key] = self._adc
+                elif key in ('form','response'):
+                    pass
+                else:
+                    opts[key] = literal_eval(opts[key])
+            print('section: ', section, 'opts: ', opts.items()) #debug
             setattr(self, '_'+section, class_(pig=self._pig, **opts))
-
+        self._pressure_sensor.update()
+        self._flow_sensor.update()
+        if isinstance(self._secondary_pressure_sensor, Sensor):
+            self._secondary_pressure_sensor.update()
+        self._flow_sensor.update()
     # TODO: Need exception handling whenever inlet valve is opened
 
     @property
@@ -115,8 +127,8 @@ class Hal:
         Args:
             value: Requested flow, as a proportion of maximum. Must be in [0, 1].
         """
-        if not 0 <= value <= 1:
-            raise ValueError('setpoint must be a number between 0 and 1')
+        if not 0 <= value <= 100:
+            raise ValueError('setpoint must be a number between 0 and 100')
         if value > 0 and not self._inlet_valve.isopen:
             self._inlet_valve.open()
         elif value == 0 and self._inlet_valve.isopen:
