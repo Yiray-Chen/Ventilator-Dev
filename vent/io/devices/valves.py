@@ -1,7 +1,6 @@
 from abc import ABC
-
 from vent.io.devices.pins import Pin, PWMOutput
-
+import numpy as np
 
 class SolenoidBase(ABC):
     """ An abstract baseclass that defines methods using valve terminology.
@@ -73,13 +72,15 @@ class PWMControlValve(SolenoidBase, PWMOutput):
     compensation of the valve's response.
     """
 
-    def __init__(self, pin, form='Normally Closed', initial_duty=0, frequency=None, pig=None):
+    def __init__(self, pin, form='Normally Closed', initial_duty=0, frequency=None, response=None, pig=None):
         PWMOutput.__init__(self, pin=pin, initial_duty=initial_duty, frequency=frequency, pig=pig)
         SolenoidBase.__init__(self, form=form)
-        self._response_array = load_valve_response(response_path)
+        if response is None:
+            raise NotImplementedError('You need to implement a default response behavior')
+        self._response_array = self.load_valve_response(response)
         
         
-    def load_valve_response(response_path):
+    def load_valve_response(self,response_path):
         # open the file in read binary mode
         response_file = open(response_path, "rb")
         #read the file to numpy array
@@ -121,7 +122,7 @@ class PWMControlValve(SolenoidBase, PWMOutput):
         else:
             idx = (np.abs(self._response_array[:,2] - (setpoint / 100))).argmin()
         
-        return self._response_array[inx,0]
+        return self._response_array[idx,0]
 
     def inverse_response(self, duty_cycle, rising=True):
         """Inverse of response. Given a duty cycle in the range (0,1),
@@ -130,9 +131,9 @@ class PWMControlValve(SolenoidBase, PWMOutput):
         idx = (np.abs(self._response_array[:,0] - duty_cycle)).argmin()
         
         if(rising==True):
-            response_val = self._response_array[inx,1]
+            response_val = self._response_array[idx,1]
         else:
-            response_val = self._response_array[inx,2]
+            response_val = self._response_array[idx,2]
         
         return response_val * 100
 

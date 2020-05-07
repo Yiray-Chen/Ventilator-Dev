@@ -67,7 +67,9 @@ class Hal:
         for section in self.config.sections():
             sdict = dict(self.config[section])
             class_ = getattr(import_module('.'+sdict['module'], 'vent.io'), sdict['type'])
-            opts = {key: sdict[key] for key in sdict.keys() - ('module', 'type')}
+            opts = {key: sdict[key] for key in sdict.keys() - ('module', 'type',)}
+            if 'adc' in opts.keys():
+                opts['adc'] = self._adc
             setattr(self, '_'+section, class_(pig=self._pig, **opts))
 
     # TODO: Need exception handling whenever inlet valve is opened
@@ -113,10 +115,10 @@ class Hal:
         Args:
             value: Requested flow, as a proportion of maximum. Must be in [0, 1].
         """
-        if 0 <= value <= 1:
+        if not 0 <= value <= 1:
             raise ValueError('setpoint must be a number between 0 and 1')
-        if value > 0 and not self._inlet_valve.isopen():
+        if value > 0 and not self._inlet_valve.isopen:
             self._inlet_valve.open()
-        elif value == 0 and self._inlet_valve.isopen():
+        elif value == 0 and self._inlet_valve.isopen:
             self._inlet_valve.close()
         self._control_valve.setpoint = value

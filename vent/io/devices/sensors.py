@@ -152,6 +152,7 @@ class AnalogSensor(Sensor):
             raise TypeError(
                 'User must specify MUX for AnalogSensor creation'
             )
+        kwargs = {key: kwargs[key] for key in kwargs.keys() - ('pig',)}
         self._check_and_set_attr(**kwargs)
 
     def calibrate(self, **kwargs):
@@ -246,7 +247,7 @@ class AnalogSensor(Sensor):
                 setattr(self, fld, val)
                 result += 1
         if result != len(kwargs):
-            raise TypeError('AnalogSensor was passed unknown field(s)')
+            raise TypeError('AnalogSensor was passed unknown field(s)',kwargs.items(),allowed)
         self._fill_attr()
 
 
